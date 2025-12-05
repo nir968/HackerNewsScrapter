@@ -7,16 +7,18 @@ import csv
 from io import StringIO
 
 
-#functions to test-------------------------------------------------------------------
+# functions to test -------------------------------------------------------------------
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+# NOTE: The name 'run_scrapting_pipeline' here is for demonstration only,
+# it should be fixed to 'run_scraping_pipeline' in your actual code if not done already.
 from src.processor import filter_posts, run_scrapting_pipeline 
-from src.scrapter import parse_posts_from_html  
+from src.scrapter import parse_posts_from_html 
 from src.output_writer import write_to_csv, FIELDNAMES
 
 # fake data for testing
-#from .mock_data import MOCK_HTML_PAGE_1, MOCK_HTML_PAGE_2 
+# from .mock_data import MOCK_HTML_PAGE_1, MOCK_HTML_PAGE_2 
 
 
 
@@ -68,34 +70,32 @@ MOCK_HTML_PAGE_2 = """
 """
 
 
-
-
-# maintrain for tests
+# main train for tests -------------------------------------------------------------------
 
 def test_parse_posts_correctly():
-   
+    
     posts = parse_posts_from_html(MOCK_HTML_PAGE_1, 1)
     
     assert len(posts) == 2
     assert posts[0]['Title'] == 'High Score Post'
     assert posts[0]['Points'] == 180
-    assert posts[1]['Number of comments'] == 0 # "discuss" אמור להפוך ל-0
+    assert posts[1]['Number of comments'] == 0 # "discuss" should be converted to 0
 
 def test_filter_posts_score():
     
     raw_posts = parse_posts_from_html(MOCK_HTML_PAGE_1, 1) 
     
-    # סינון: רק פוסטים עם ציון מעל 100
+    # Filter: Only posts with score above 100
     filtered = filter_posts(raw_posts, min_score=100, max_score=1000)
     assert len(filtered) == 1
     assert filtered[0]['Title'] == 'High Score Post'
 
-# --- בדיקות Pipeline עם Mocking (החלק החשוב ביותר) ---
+# --- Pipeline Tests with Mocking (The most important part) ---
 
 @pytest.fixture
 def mock_config_default():
-    """יוצר אובייקט config בסיסי לבדיקות Mocking."""
-    # זהו אובייקט argparse.Namespace מזויף
+    """Creates a basic config object for Mocking tests."""
+    # This is a fake argparse.Namespace object
     return argparse.Namespace(
         min_score=0,
         max_score=1000,
@@ -104,12 +104,12 @@ def mock_config_default():
     )
 
 def test_pipeline_basic_two_pages(requests_mock, mock_config_default):
-    """בדיקה של pipeline שעובר שני עמודים עד שמקבל 404."""
+    """Tests the pipeline across two pages until it receives a 404."""
     
-    # Mocking: מזייפים את תגובות השרת:
+    # Mocking: Faking server responses:
     requests_mock.get("https://news.ycombinator.com/newest?p=1", text=MOCK_HTML_PAGE_1)
     requests_mock.get("https://news.ycombinator.com/newest?p=2", text=MOCK_HTML_PAGE_2)
-    # מזייפים 404 לעמוד 3 כדי שהלולאה תעצור:
+    # Faking 404 for page 3 so the loop stops:
     requests_mock.get("https://news.ycombinator.com/newest?p=3", status_code=404)
     
     posts = run_scrapting_pipeline(mock_config_default)
@@ -120,41 +120,41 @@ def test_pipeline_basic_two_pages(requests_mock, mock_config_default):
     assert posts[2]['Title'] == 'Mid Score Post'
 
 def test_pipeline_stop_at_max_posts(requests_mock, mock_config_default):
-    """בדיקה שה-pipeline עוצר כשהוא מגיע ל-max_posts."""
+    """Tests that the pipeline stops when it reaches max_posts."""
     
-    # מזייפים מספיק עמודים כדי לאסוף את המגבלה:
+    # Faking enough pages to collect the limit:
     requests_mock.get("https://news.ycombinator.com/newest?p=1", text=MOCK_HTML_PAGE_1)
     requests_mock.get("https://news.ycombinator.com/newest?p=2", text=MOCK_HTML_PAGE_1) 
 
     requests_mock.get("https://news.ycombinator.com/newest?p=3", status_code=404)
     
-    # מגבילים את הכמות ל-3 פוסטים (מתוך 4 זמינים)
+    # Limiting the count to 3 posts (out of 4 available)
     mock_config_default.max_posts = 3
     
     posts = run_scrapting_pipeline(mock_config_default)
     
-    # הבדיקה: צריך להיות 3 פוסטים בלבד
+    # Check: there should only be 3 posts
     assert len(posts) == 3
-    # הפוסט השלישי שנאסף הוא ה'High Score Post' מעמוד 2
+    # The third post collected should be the 'High Score Post' from Page 2
     assert posts[2]['Title'] == 'High Score Post' 
 
 def test_pipeline_skip_page(requests_mock, mock_config_default):
-    """בדיקה שה-pipeline מדלג על עמוד 2 כנדרש."""
+    """Tests that the pipeline skips page 2 as required."""
     
-    requests_mock.get("https://news.ycombinator.com/newest?p=1", text=MOCK_HTML_PAGE_1) # 2 פוסטים
-    requests_mock.get("https://news.ycombinator.com/newest?p=2", text=MOCK_HTML_PAGE_2) # זה העמוד המדלג (יכיל 'Mid Score Post')
-    requests_mock.get("https://news.ycombinator.com/newest?p=3", text=MOCK_HTML_PAGE_1) # 2 פוסטים נוספים
+    requests_mock.get("https://news.ycombinator.com/newest?p=1", text=MOCK_HTML_PAGE_1) # 2 posts
+    requests_mock.get("https://news.ycombinator.com/newest?p=2", text=MOCK_HTML_PAGE_2) # This is the page to skip (contains 'Mid Score Post')
+    requests_mock.get("https://news.ycombinator.com/newest?p=3", text=MOCK_HTML_PAGE_1) # 2 more posts
     requests_mock.get("https://news.ycombinator.com/newest?p=4", status_code=404)
     
-    # מגדירים Skip Pages ל-2
+    # Setting Skip Pages to 2
     mock_config_default.skip_pages = [2]
     mock_config_default.max_posts = 10
     
     posts = run_scrapting_pipeline(mock_config_default)
     
-    # הבדיקה: אמורים להיות 4 פוסטים בלבד (מ-עמוד 1 ו-3)
+    # Check: There should only be 4 posts (from pages 1 and 3)
     assert len(posts) == 4
     assert posts[0]['Page number'] == 1
     assert posts[2]['Page number'] == 3
-    # בדיקה שלא נאסף אף פוסט מ-Page 2 (Mid Score Post)
+    # Check that no posts were collected from Page 2 (Mid Score Post)
     assert not any(p['Title'] == 'Mid Score Post' for p in posts)
