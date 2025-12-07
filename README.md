@@ -1,9 +1,3 @@
-זו החלטה מעולה. `README` קליל וקצר יותר נותן תחושה שהפרויקט יעיל וקל להבנה.
-
-הנה גרסה קלילה, ישירה וממוקדת של ה-`README` באנגלית:
-
------
-
 # 🚀 HackerNews Scraper Pipeline
 
 A simple, robust Python tool to grab the newest posts from HackerNews. Filter by points, and stop exactly when you hit your post limit.
