@@ -1,10 +1,13 @@
-#scrapter = הגירודים
+#scraper = הגירודים
 from bs4 import BeautifulSoup
 import requests
 
 HACKERNEWS_URL = "https://news.ycombinator.com/newest"
 
 POST_FIELDS = ['Title', 'URL', 'Author', 'Points', 'Number of comments', 'Page number']
+
+# (line 1) post row  -  title, url
+# (line 2) score row -  points, author, comments
 
 
 def fetch_page( page_number: int) -> str | None:
@@ -43,22 +46,21 @@ def parse_posts_from_html(html_content: str, page_num: int) -> list[dict]:
             title, url, author = "N/A", "N/A", "N/A"
             points, comments_num = 0, 0
         #get title and url
-            title_span = post_row.find("span", class_="titleline")
-            if title_span:
-                    title_link = title_span.find("a")  
-            else:
-                    title_link = None #check if title_span is exists and then find a(link)
-                    
-            title_link = post_row.find("a", class_="titlelink")
+            title_span = post_row.find("span", class_="titleline")#
+
+            all_links = title_span.find_all("a") if title_span else []#find all links in title span
+            
+            title_link = all_links[0] if all_links else None #get first link as title link
+
             if title_link:  
                     title = title_link.text
                     url = title_link.get("href", "N/A")
 
                     if url.startswith("item?id="):
-                        url = f"https://news.ycombinator.com/{url}"
+                        url = f"https://news.ycombinator.com/{url}"#
 
 
-            score_row = post_row.find_next_sibling("tr")#go to next tr
+            score_row = post_row.find_next_sibling("tr")#go to next tr (line 2)
         #get author and points
             if score_row:
                 score_span = score_row.find("span", class_="score")
@@ -77,7 +79,7 @@ def parse_posts_from_html(html_content: str, page_num: int) -> list[dict]:
                 subtext_links = score_row.find_all('a')
                     
                 if subtext_links:
-                    #comment_link = next((a for a in subtext_links if 'comment' in a.text or 'discuss' in a.text), None)
+                    
                     for link in subtext_links:
                         if 'comment' in link.text or 'discuss' in link.text:
                             comment_link = link

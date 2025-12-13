@@ -12,8 +12,14 @@ Get your environment ready and install the necessary dependencies:
 # Activate your environment first
 .\venv\Scripts\Activate
 
+-----------------------------------------
+C:\Users\nir96\Desktop\sagolexam\venv\Scripts\Activate
+python main.py
+-----------------------------------------
+
 # Install everything you need (requests, BeautifulSoup, and testing tools)
-pip install requests beautifulsoup4 pytest requests-mock
+#pip install requests beautifulsoup4 pytest requests-mock
+pip install -r requirements.txt
 ```
 
 ### 2\. How to Run

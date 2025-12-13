@@ -1,5 +1,5 @@
 import argparse
-from src.processor import run_scrapting_pipeline
+from src.processor import run_scraping_pipeline
 from src.output_writer import write_to_csv
  
 def parse_arguments():
@@ -31,6 +31,7 @@ def parse_arguments():
     parser.add_argument(
         "--skip-pages",
         type=int,
+        nargs='*',
         default=[],
         help='List of page numbers to skip during scraping. '
     )
@@ -42,7 +43,6 @@ def parse_arguments():
         help='The name of the CSV file to write results to. '
     )
 
-
     args = parser.parse_args()
     return args
 
@@ -51,7 +51,7 @@ def main():
     config = parse_arguments()
     print(f"Starting scraper with config: {config}")
     #new
-    allposts = run_scrapting_pipeline(config)
+    allposts = run_scraping_pipeline(config)
 
     if allposts:
         write_to_csv(allposts, config.output_file)

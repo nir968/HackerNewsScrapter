@@ -1,6 +1,6 @@
 import pytest
-import requests_mock
-import argparse
+import requests_mock #to mock HTTP requests
+import argparse #input by user(min_score,max_score,max_posts,skip_pages)
 import os
 import sys
 import csv
@@ -11,10 +11,9 @@ from io import StringIO
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# NOTE: The name 'run_scrapting_pipeline' here is for demonstration only,
-# it should be fixed to 'run_scraping_pipeline' in your actual code if not done already.
-from src.processor import filter_posts, run_scrapting_pipeline 
-from src.scrapter import parse_posts_from_html 
+
+from src.processor import filter_posts, run_scraping_pipeline 
+from src.scraper import parse_posts_from_html 
 from src.output_writer import write_to_csv, FIELDNAMES
 
 # fake data for testing
@@ -27,7 +26,11 @@ MOCK_HTML_PAGE_1 = """
     <tr class="athing" id="410001">
         <td align="right" valign="top" class="title">1.</td>
         <td class="votelinks"></td>
-        <td class="title"><a href="http://example.com/high" class="titlelink">High Score Post</a></td>
+        <td class="title">
+            <span class="titleline">
+                <a href="http://example.com/high">High Score Post</a> 
+            </span>
+        </td>
     </tr>
     <tr>
         <td colspan="2"></td>
@@ -39,7 +42,11 @@ MOCK_HTML_PAGE_1 = """
     <tr class="athing" id="410002">
         <td align="right" valign="top" class="title">2.</td>
         <td class="votelinks"></td>
-        <td class="title"><a href="http://example.com/low" class="titlelink">Low Score Post</a></td>
+        <td class="title">
+            <span class="titleline">
+                <a href="http://example.com/low">Low Score Post</a>
+            </span>
+        </td>
     </tr>
     <tr>
         <td colspan="2"></td>
@@ -52,12 +59,17 @@ MOCK_HTML_PAGE_1 = """
 <a class="morelink" href="news?p=2">More</a> 
 """
 
+
 MOCK_HTML_PAGE_2 = """
 <table class="itemlist">
     <tr class="athing" id="410003">
         <td align="right" valign="top" class="title">1.</td>
         <td class="votelinks"></td>
-        <td class="title"><a href="http://example.com/mid" class="titlelink">Mid Score Post</a></td>
+        <td class="title">
+            <span class="titleline">
+                <a href="http://example.com/mid">Mid Score Post</a>
+            </span>
+        </td>
     </tr>
     <tr>
         <td colspan="2"></td>
@@ -68,8 +80,6 @@ MOCK_HTML_PAGE_2 = """
     </tr>
 </table>
 """
-
-
 # main train for tests -------------------------------------------------------------------
 
 def test_parse_posts_correctly():
@@ -112,7 +122,7 @@ def test_pipeline_basic_two_pages(requests_mock, mock_config_default):
     # Faking 404 for page 3 so the loop stops:
     requests_mock.get("https://news.ycombinator.com/newest?p=3", status_code=404)
     
-    posts = run_scrapting_pipeline(mock_config_default)
+    posts = run_scraping_pipeline(mock_config_default)
     
     assert len(posts) == 3
     assert posts[0]['Page number'] == 1
@@ -131,7 +141,7 @@ def test_pipeline_stop_at_max_posts(requests_mock, mock_config_default):
     # Limiting the count to 3 posts (out of 4 available)
     mock_config_default.max_posts = 3
     
-    posts = run_scrapting_pipeline(mock_config_default)
+    posts = run_scraping_pipeline(mock_config_default) # Running the new pipeline
     
     # Check: there should only be 3 posts
     assert len(posts) == 3
@@ -150,7 +160,7 @@ def test_pipeline_skip_page(requests_mock, mock_config_default):
     mock_config_default.skip_pages = [2]
     mock_config_default.max_posts = 10
     
-    posts = run_scrapting_pipeline(mock_config_default)
+    posts = run_scraping_pipeline(mock_config_default)
     
     # Check: There should only be 4 posts (from pages 1 and 3)
     assert len(posts) == 4
@@ -158,3 +168,9 @@ def test_pipeline_skip_page(requests_mock, mock_config_default):
     assert posts[2]['Page number'] == 3
     # Check that no posts were collected from Page 2 (Mid Score Post)
     assert not any(p['Title'] == 'Mid Score Post' for p in posts)
+    # for each p in posts:
+    #       if(['Title'] == 'Mid Score Post')
+    #           assert False
+    #       assert True
+
+    # any() = returns True if any element of the iterable is true. If the iterable is empty, returns False
