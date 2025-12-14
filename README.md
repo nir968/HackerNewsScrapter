@@ -12,14 +12,13 @@ Get your environment ready and install the necessary dependencies:
 # Activate your environment first
 .\venv\Scripts\Activate
 
------------------------------------------
-C:\Users\nir96\Desktop\sagolexam\venv\Scripts\Activate
-python main.py
------------------------------------------
-
 # Install everything you need (requests, BeautifulSoup, and testing tools)
 #pip install requests beautifulsoup4 pytest requests-mock
 pip install -r requirements.txt
+
+# Run the project
+python main.py
+
 ```
 
 ### 2\. How to Run
@@ -29,8 +28,10 @@ Run the script using `python main.py`, customizing the process with the followin
 | Option | What it does | Example |
 | :--- | :--- | :--- |
 | `--min-score` | Minimum points required for a post. | `50` |
+| `--max-score` | Maximum points required for a post. | `100` |
 | `--max-posts` | **STOPS** the scraper immediately after collecting this many posts. | `15` |
-| `--skip-pages` | Pages to completely ignore (e.g., to skip page 3 and 5). | `3 5` |
+| `--skip-pages` | Pages to completely ignore (e.g., to skip page 3 and 5). | `3 5 6` |
+| `--output-file` | Name of the CSV file where the final results will be saved. | `special_results.csv` |
 
 **Example Command:**
 
